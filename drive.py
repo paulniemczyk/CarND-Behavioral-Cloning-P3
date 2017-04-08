@@ -67,9 +67,10 @@ def process_image(image):
     Use in both clone.py and drive.py, with exception of RGB or RBG
     Returns the new image
     '''
+    TARGET_SIZE = (64,64)
 
     image = image[70:-25,:,:]
-    #image = cv2.GaussianBlur(image, (3,3),0)
+    image = cv2.GaussianBlur(image, (3,3),0)
     image = cv2.resize(image, TARGET_SIZE, interpolation=cv2.INTER_AREA)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)  # cv2 loads images as BGR
     image = image/255.0 - 0.5
