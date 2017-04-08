@@ -16,6 +16,10 @@ from keras.models import load_model
 import h5py
 from keras import __version__ as keras_version
 
+import cv2    # Added this
+
+
+
 sio = socketio.Server()
 app = Flask(__name__)
 model = None
@@ -48,6 +52,30 @@ set_speed = 9
 controller.set_desired(set_speed)
 
 
+def displayCV2(image):
+    '''
+    Helper function to display CV2 images for troubleshooting only
+    Takes an image and displays it
+    '''
+    cv2.imshow('image',image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+def process_image(image):
+    '''
+    Process a given cv2 image in BGR
+    Use in both clone.py and drive.py, with exception of RGB or RBG
+    Returns the new image
+    '''
+
+    image = image[70:-25,:,:]
+    #image = cv2.GaussianBlur(image, (3,3),0)
+    image = cv2.resize(image, TARGET_SIZE, interpolation=cv2.INTER_AREA)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)  # cv2 loads images as BGR
+    image = image/255.0 - 0.5
+
+    return image
+
 @sio.on('telemetry')
 def telemetry(sid, data):
     if data:
@@ -61,6 +89,17 @@ def telemetry(sid, data):
         imgString = data["image"]
         image = Image.open(BytesIO(base64.b64decode(imgString)))
         image_array = np.asarray(image)
+        
+        
+        ###### I EDITED THIS ONLY #####
+
+        # Image opens in RGB but convert to BGR since my clone.py processing starts with BGR
+        image_array = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR) 
+        image_array = process_image(image_array)
+
+        ##### END OF EDITING #####
+
+
         steering_angle = float(model.predict(image_array[None, :, :, :], batch_size=1))
 
         throttle = controller.update(float(speed))
